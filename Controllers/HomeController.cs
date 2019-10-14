@@ -4,23 +4,51 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using call_json_api.Models;
+using Polly;
 
 namespace call_json_api.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public HomeController(ILogger<HomeController> logger)
-        {
+        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory)
+        {            
             _logger = logger;
+            _httpClientFactory = httpClientFactory;
         }
 
-        public IActionResult Index()
+        private async Task<WeatherForecast> GetWeatherForecasts()
         {
-            return View();
+            // Get an instance of HttpClient from the factpry that we registered
+            // in Startup.cs
+            var client = _httpClientFactory.CreateClient("API Client");
+
+            // Call the API & wait for response. 
+            // If the API call fails, call it again according to the re-try policy
+            // specified in Startup.cs
+            var result = await client.GetAsync("/api/location/1103816/");
+
+            if (result.IsSuccessStatusCode)
+            {
+                // Read all of the response and deserialise it into an instace of
+                // WeatherForecast class
+                var content = await result.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<WeatherForecast>(content);
+            }
+            return null;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var model = await GetWeatherForecasts();
+            // Pass the data into the View
+            return View(model);
         }
 
         public IActionResult Privacy()
