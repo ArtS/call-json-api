@@ -11,7 +11,8 @@ dotnet restore
 dotnet run
 ```
 
-And open [https://localhost:5001/][https://localhost:5001/] in your browser.
+And open [https://localhost:5001/][2] in your browser.
+[2]:https://localhost:5001/
 
 ### License ###
 Copyright (C) 2019 Artem Skvira
